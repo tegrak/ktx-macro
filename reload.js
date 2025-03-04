@@ -13,7 +13,7 @@ const initialize_reload = () => {
 };
 
 (() => {
-	if (!location.href.startsWith(MAIN_URI))
+	if (!location.href.startsWith(MAIN_URI) && !location.href.startsWith(FAMILY_URI))
 		return;
 
 	chrome.runtime.sendMessage(

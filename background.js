@@ -1,5 +1,3 @@
-let tabs = [];
-
 const playSound = () => {
 	if (typeof (audio) != "undefined" && audio) {
 		audio.pause();
@@ -25,19 +23,24 @@ const sendTelegramMessage = () => {
 	);
 }
 
-function addTab(tabid) {
-	if (tabs.indexOf(tabid) === -1)
-		tabs.push(tabid);
+const removeMacroTab = (tabid) => {
+	chrome.storage.local.get(["ktx-macro-tabs"],
+		function (result) {
+			let tabs = result["ktx-macro-tabs"];
+			console.log('remove tab tabs: ' + tabs + ', tabid: ' + tabid);
+			if (typeof(tabs) != "object" || !Array.isArray(tabs))
+				tabs = [];
+
+			var index = tabs.indexOf(tabid);
+			if (index != -1) {
+				tabs.splice(index, 1);
+				chrome.storage.local.set({"ktx-macro-tabs": tabs});
+			}
+		}
+	);
 }
 
-function removeTab(tabid) {
-	console.log('remove tab tabs: ' + tabs + ', tabid: ' + tabid);
-	var index = tabs.indexOf(tabid);
-	if (index != -1)
-		tabs.splice(index, 1);
-}
-
-function checkTabs() {
+const checkMacroTabs = () => {
 	var tabid;
 	for (tabid of tabs) {
 		chrome.tabs.get(tabid, function (tab) {
@@ -59,15 +62,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		sendResponse(true);
 	}
 	else if (message && message.type == 'tabId') {
-		addTab(sender.tab.id);
 		sendResponse(sender.tab.id);
 	}
-	else if (message && message.type == 'tabs') {
-		checkTabs();
-		sendResponse(tabs);
-  	}
 });
 
 chrome.tabs.onRemoved.addListener(function (tabid, removed) {
-	removeTab(tabid);
+	removeMacroTab(tabid);
 });
