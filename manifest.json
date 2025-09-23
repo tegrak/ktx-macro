@@ -4,7 +4,7 @@
 	"description": "KTX 매진 좌석 예약 도구",
 	"version": "1.4.0",
 	"permissions": ["scripting", "storage"],
-	"host_permissions": ["https://www.letskorail.com/"],
+	"host_permissions": ["https://www.korail.com/"],
 	"icons": {
 		"96": "icon96.png"
 	},
@@ -12,14 +12,14 @@
 		{
 			"all_frames": true,
 			"js": ["content_header.js", "reload.js"],
-			"matches": ["https://www.letskorail.com/*"],
+			"matches": ["https://www.korail.com/*"],
 			"run_at": "document_start"
 		},
 		{
 			"all_frames": true,
 			"js": ["content.js"],
 			"css": ["content.css"],
-			"matches": ["https://www.letskorail.com/*"],
+			"matches": ["https://www.korail.com/*"],
 			"run_at": "document_end"
 		}
 	],
@@ -33,7 +33,7 @@
 			"inject_nonstop_popup.js",
 			"tada.mp3"
 		],
-		"matches": ["https://www.letskorail.com/*"]
+		"matches": ["https://www.korail.com/*"]
 	}],
 	"action": {
 		"default_title": "telegram",

@@ -1,4 +1,5 @@
-let CHECKBOX_COLUMN = [5, 6, 10];
+let CHECKBOX_COLUMN = [0, 1];
+let CHECKBOX_COLUMN_NAME = ["일반실", "특실"];
 const MAIN_PAGE = 0;
 const FAMILY_PAGE = 1;
 let RESERVE_BUTTON = {};
@@ -6,73 +7,92 @@ let PAGE = MAIN_PAGE;
 let checkboxLastClickPos = {"row": -1, "column": -1};
 
 const getTableResult = () => {
-	return document.querySelectorAll("#divResult > .tbl_h > tbody > tr");
+	return document.querySelectorAll(".tckList:not(#ktx-macro-header):not(.ktx-macro-control)");
 };
 
 const getTableResultColumn = (row, column) => {
-	return getTableResult()[row].querySelector(`td:nth-child(${column})`);
+	return getTableResult()[row].querySelectorAll(".price_box")[column];
 };
 
 const getTableResultCheckbox = (objRow, column) => {
-	return objRow.querySelector(`td:nth-child(${column}) .ktx-macro-checkbox`);
+	return objRow.querySelectorAll(".price_box")[column].querySelector(`.ktx-macro-checkbox`);
 };
 
 const createHeaderCheckbox = () => {
-	const row = document.querySelector("#divResult > .tbl_h > thead > tr");
-	var child;
-
-	for (var col of CHECKBOX_COLUMN) {
-		child = row.querySelector(`th:nth-child(${col})`);
-		child.insertAdjacentHTML("beforeend", 
-			`
-				<div>
-					<label>
-						<input type="checkbox" data-column="${col}" class="ktx-macro-header-checkbox">
-						매크로
-					</label>
+	const ul = document.querySelector(".tckWrap > ul");
+	let header = `
+		<li id="ktx-macro-header" class="tckList">
+			<div class="tck_inner">
+				<div class="info_inner"></div>
+	`;
+	for (let col of CHECKBOX_COLUMN) {
+		header += `
+				<div class="price_box">
+					<div class="inner">
+						<label>
+							<input type="checkbox" class="ktx-macro-header-checkbox" data-column="${col}">${CHECKBOX_COLUMN_NAME[col]}
+						</label>
+					</div>
 				</div>
-			`
-		);
+		`;
 	}
-
+	header += `
+			</div>
+		</li>
+	`;
+	ul.insertAdjacentHTML("afterbegin", header);
 };
 
 const setHeaderCheckboxEvent = () => {
-	const header = document.querySelector("#divResult > .tbl_h > thead > tr");
-
-	for (var col of CHECKBOX_COLUMN) {
-		header.querySelector(`th:nth-child(${col}) .ktx-macro-header-checkbox`)
-			.addEventListener('change', changeHeaderCheckbox);
+	const headerCheckBoxes = document.querySelectorAll("#ktx-macro-header .ktx-macro-header-checkbox");
+	//console.log("headerCheckBoxes: ", headerCheckBoxes);
+	for (let checkbox of headerCheckBoxes) {
+		checkbox.addEventListener('change', changeHeaderCheckbox);
 	}
 };
 
 const changeHeaderCheckbox = (event) => {
-	const rows = document.querySelectorAll("#divResult > .tbl_h > tbody > tr");
+	const rows = getTableResult();
 	const child_num = event.target.dataset.column;
-
+	
 	if (!rows || !rows.length) {
 		return;
 	}
 
-	rows.forEach((row) => {
-		row.querySelector(`td:nth-child(${child_num}) .ktx-macro-checkbox`)
-			.checked = event.target.checked;
+	rows.forEach((o, row) => {
+		const priceBoxes = o.querySelectorAll(".price_box");
+		if (priceBoxes == null || priceBoxes.length < child_num) {
+			return;
+		}
+		const item = priceBoxes[child_num].querySelector(".ktx-macro-checkbox");
+		item.checked = event.target.checked;
 	});
 	saveCheckboxState();
 };
 
 const createCheckbox = () => {
-	const rows = document.querySelectorAll("#divResult > .tbl_h > tbody > tr");
+	const rows = getTableResult();
 
-	if (!rows.length) {
+	if (!rows || !rows.length) {
 		return;
 	}
 
 	rows.forEach((o, row) => {
+		const priceBoxes = o.querySelectorAll(".price_box");
+		if (priceBoxes == null || priceBoxes.length == 0) {
+			return;
+		}
 		for (var col of CHECKBOX_COLUMN) {
-			o.querySelector(`td:nth-child(${col})`)
-				.insertAdjacentHTML("beforeend", 
-					getCheckboxTemplate(uid++, row, col));
+			const item = priceBoxes[col].querySelector(".inner")
+			if (!item) {
+				continue;
+			}
+			const available = priceBoxes[col].querySelector(".txt_price");
+			const soldOut = priceBoxes[col].querySelector(".tck_etc_use");
+			if (!available && !soldOut) {
+				continue;
+			}
+			item.insertAdjacentHTML("beforeend", getCheckboxTemplate(uid++, row, col));
 		}
 	});
 };
@@ -88,7 +108,7 @@ const isChecked = uid => {
 	return checkedItems.includes(String(uid));
 };
 
-const isLogin = () => !!document.querySelectorAll(".gnb_list > .log_nm").length;
+const isLogin = () => !!document.querySelectorAll(".btnGoLogout").length;
 
 const getCheckboxTemplate = (uid, row, column) => {
 	if (!uid) {
@@ -96,19 +116,9 @@ const getCheckboxTemplate = (uid, row, column) => {
 	}
 
 	return `
-		<div>
-			<label>
-				<input 
-					type="checkbox" 
-					class="ktx-macro-checkbox" 
-					value="${uid}" 
-					${isChecked(uid) && "checked"}
-					data-row="${row}"
-					data-column="${column}"
-				>
-				매크로
-			</label>
-		</div>
+		<input type="checkbox" class="ktx-macro-checkbox" 
+			value="${uid}" ${isChecked(uid) && "checked"}
+			data-row="${row}" data-column="${column}">
 	`;
 };
 
@@ -163,7 +173,7 @@ const macroStop = () => {
 const macro = () => {
 	let uid = 0;
 	let $row;
-	const $rows = document.querySelectorAll("#divResult > .tbl_h > tbody > tr");
+	const $rows = getTableResult();
 	const len = $rows.length;
 	let succeeded = false;
 	let $td, $a;
@@ -178,9 +188,13 @@ const macro = () => {
 			if (!isChecked(++uid)) {
 				continue;
 			}
-			$td = $row.querySelector(`td:nth-child(${col})`);
+			$td = getTableResultColumn(i, col);
 			$td.style.backgroundColor = "#f03e3e";
-			$a = $td.querySelector(`a:nth-child(1)`);
+			const available = $td.querySelector(".txt_price");
+			if (available == null) {
+				continue;
+			}
+			$a = $td.querySelector(`a`);
 			let $button;
 			for (let img of RESERVE_BUTTON[col]) {
 				//console.log(img);
@@ -211,7 +225,8 @@ const macro = () => {
 };
 
 const reload = () => {
-	inject_click(document.querySelector(".btn_inq > a"));
+	inject_click(document.querySelector(".tab_container .ktx button"));
+	initialize();
 };
 
 const inject_click = (obj) => {
@@ -294,7 +309,7 @@ const clickCheckbox = (event) => {
 	const curr_col = Number(event.target.dataset.column);
 	const prev_row = Number(checkboxLastClickPos.row);
 	const prev_col = Number(checkboxLastClickPos.column);
-	//console.log('checkbox row=' + event.target.dataset.row + ' column=' + event.target.dataset.column);
+	console.log('checkbox row=' + event.target.dataset.row + ' column=' + event.target.dataset.column);
 	do {
 		if (!event.shiftKey || event.ctrlKey || event.altKey)
 			break;
@@ -388,6 +403,13 @@ const inject_nonstop_popup = () => {
 const initialize = () => {
 	console.log("tabId: " + tabId);
 
+	const ticketList = getTableResult();
+
+	if (ticketList == null || ticketList.length == 0) {
+		window.setTimeout(initialize, 1000);
+		return;
+	}
+
 	const isStarted = getTabStorageItem("macro") == "on";
 
 	if (isStarted) {
@@ -401,19 +423,21 @@ const initialize = () => {
 	} else {
 		removeTabStorageItem("checkedItems");
 	}
-
-	document.querySelector(".btn_inq").insertAdjacentHTML(
+	
+	document.querySelector(".tckWrap > ul").insertAdjacentHTML(
 		"beforeend",
 		`
-			<button type="button" class="ktx-macro-button">
-				${isStarted ? "자동 예매 정지" : "자동 예매 시작"}
-			</button>
-			<button type="button" class="check-all-button">
-				전체 선택
-			</button>
+			<li class="tckList ktx-macro-control">
+				<button type="button" class="ktx-macro-button">
+					${isStarted ? "자동 예매 정지" : "자동 예매 시작"}
+				</button>
+				<button type="button" class="check-all-button">
+					전체 선택
+				</button>
+			</li>
 		`
 	);
-
+	
 	document
 		.querySelector(".ktx-macro-button")
 		.addEventListener("click", isStarted ? macroStop : macroStart);
@@ -426,26 +450,25 @@ const initialize = () => {
 	createCheckbox();
 	setHeaderCheckboxEvent();
 	setCheckboxEvent();
-	//ignoreNonstopPopup();
-	//ignoreConfirmPeople();
-	//ignoreDailyPopup();
 	inject();
 };
 
 (() => {
+	console.log("initialize content.js");
 	disableEventListners();
 
 	if (location.href.startsWith(POPUP_URI)) {
 		inject_nonstop_popup();
 		return;
 	}
-	else if (!document.querySelector(".btn_inq")) {
+	else if (!document.querySelector(".tckWrap")) {
 		return;
 	}
 
 	if (location.href.startsWith(MAIN_URI)) {
 		PAGE = MAIN_PAGE;
-		CHECKBOX_COLUMN = [5, 6, 10];
+		CHECKBOX_COLUMN = [0, 1];
+		CHECKBOX_COLUMN_NAME = ["일반실", "특실"];
 		RESERVE_BUTTON[5] = [
 			"/docs/2007/img/common/icon_apm_bl.gif", 
 			"/docs/2007/img/common/icon_apm_rd.gif"

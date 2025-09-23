@@ -26,3 +26,18 @@
 	border: 1px solid #f76707;
 	cursor: pointer;
 }
+
+.tckWrap input[type="checkbox"] {
+	display: inline-block !important;
+	position: static !important;
+	width: 16px !important;
+	height: 16px !important;
+	margin: 0 6px 0 0 !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+	appearance: auto !important;
+	-webkit-appearance: checkbox !important;
+	clip: auto !important;
+	clip-path: none !important;
+	transform: none !important;
+}

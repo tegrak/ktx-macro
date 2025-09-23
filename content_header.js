@@ -2,7 +2,7 @@ let tabId = 0;
 let uid = 1;
 let reloadTimeoutID = null;
 
-const MAIN_URI = "https://www.letskorail.com/ebizprd/EbizPrdTicketPr21111_i1.do";
+const MAIN_URI = "https://www.korail.com/ticket/search/list";
 const FAMILY_URI = "https://www.letskorail.com/ebizprd/EbizPrdTicketPr21151_i1.do";
 const LOGIN_PAGE_URI = "https://www.letskorail.com/korail/com/login.do";
 const POPUP_URI = "https://www.letskorail.com/docs/pz/pz_msg_pop1.jsp";
